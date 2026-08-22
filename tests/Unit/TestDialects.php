@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Quillstack\Db\Tests\Unit;
 
+use Quillstack\Db\Dialects\Dialects;
 use Quillstack\Db\Dialects\MySqlDialect;
 use Quillstack\Db\Dialects\PostgresDialect;
 use Quillstack\Db\Dialects\SqliteDialect;
 use Quillstack\Db\Exceptions\UnknownDialectException;
-use Quillstack\Db\Dialects\Dialects;
 use Quillstack\UnitTests\AssertEqual;
 use Quillstack\UnitTests\AssertExceptions;
 use Quillstack\UnitTests\Types\AssertBoolean;
