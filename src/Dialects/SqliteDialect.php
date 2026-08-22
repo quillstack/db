@@ -44,6 +44,16 @@ class SqliteDialect implements Dialect
 
     /**
      * {@inheritDoc}
+     *
+     * SQLite takes 999 by default, and older builds less; this leaves room.
+     */
+    public function maximumBindings(): int
+    {
+        return 900;
+    }
+
+    /**
+     * {@inheritDoc}
      */
     public function name(): string
     {

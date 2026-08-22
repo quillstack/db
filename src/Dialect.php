@@ -28,6 +28,12 @@ interface Dialect
     public function supportsReturning(): bool;
 
     /**
+     * How many values one statement may bind. Writing a thousand rows at once is one
+     * statement only where the database will take them.
+     */
+    public function maximumBindings(): int;
+
+    /**
      * The name this dialect answers to, as PDO reports its driver.
      */
     public function name(): string;

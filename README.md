@@ -64,6 +64,14 @@ $db->table('posts')->whereIn('user_id', [1, 2, 3])->get();
 
 An empty set matches nothing rather than becoming `IN ()`, which is not SQL.
 
+Many rows go in one statement rather than one each, split into as many as the values need —
+a database will only bind so many per statement, and finding that out at a thousand rows is
+not the moment:
+
+```php
+$db->table('users')->insertMany($rows);
+```
+
 ## Values are bound, never written
 
 No value reaches the statement. What goes into the SQL is a placeholder; the value travels

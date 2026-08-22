@@ -320,6 +320,63 @@ class Query
     }
 
     /**
+     * Writes many rows in one statement rather than one each.
+     *
+     * Split into as many statements as the values need: a database will only bind so many
+     * per statement, and finding that out at a thousand rows is not the moment.
+     *
+     * @param array<int, array<string, mixed>> $rows
+     *
+     * @return int how many rows were written
+     */
+    public function insertMany(array $rows): int
+    {
+        if ($rows === []) {
+            return 0;
+        }
+
+        $dialect = $this->connection->dialect();
+        $columns = array_keys($rows[0]);
+        $perRow = max(1, count($columns));
+        $written = 0;
+
+        foreach (array_chunk($rows, max(1, intdiv($dialect->maximumBindings(), $perRow))) as $chunk) {
+            $written += $this->insertChunk($dialect, $columns, $chunk);
+        }
+
+        return $written;
+    }
+
+    /**
+     * @param string[] $columns
+     * @param array<int, array<string, mixed>> $rows
+     */
+    private function insertChunk(Dialect $dialect, array $columns, array $rows): int
+    {
+        $bindings = new Bindings();
+        $names = implode(', ', array_map(
+            static fn (string $column): string => $dialect->quoteIdentifier($column),
+            $columns
+        ));
+
+        $tuples = [];
+
+        foreach ($rows as $row) {
+            $tuples[] = '(' . implode(', ', array_map(
+                static fn (string $column): string => $bindings->add($row[$column] ?? null),
+                $columns
+            )) . ')';
+        }
+
+        $table = Name::qualify($dialect, $this->table);
+
+        return $this->connection->execute(
+            "INSERT INTO {$table} ({$names}) VALUES " . implode(', ', $tuples),
+            $bindings->all()
+        );
+    }
+
+    /**
      * @param array<string, mixed> $values
      */
     public function update(array $values): int

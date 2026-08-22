@@ -151,4 +151,72 @@ class TestQueryParts
                 ->get()
         );
     }
+
+    /**
+     * A thousand rows should not be a thousand statements.
+     */
+    public function manyRowsGoInOneStatement()
+    {
+        $connection = InMemoryDatabase::connection();
+        $rows = [];
+
+        foreach (range(1, 50) as $i) {
+            $rows[] = ['email' => "user{$i}@example.com", 'active' => 1, 'deleted_at' => null];
+        }
+
+        $before = $connection->queryCount();
+
+        $this->assertEqual->equal(50, $connection->table('users')->insertMany($rows));
+        $this->assertEqual->equal(1, $connection->queryCount() - $before);
+        $this->assertEqual->equal(50, $connection->table('users')->count());
+    }
+
+    /**
+     * A database will only bind so many values per statement, and finding that out at a
+     * thousand rows is not the moment. SQLite stops at 999.
+     */
+    public function moreThanOneStatementWhereTheValuesNeedIt()
+    {
+        $connection = InMemoryDatabase::connection();
+        $rows = [];
+
+        foreach (range(1, 500) as $i) {
+            $rows[] = ['email' => "user{$i}@example.com", 'active' => 1, 'deleted_at' => null];
+        }
+
+        $before = $connection->queryCount();
+
+        $this->assertEqual->equal(500, $connection->table('users')->insertMany($rows));
+
+        // 3 values a row, 900 to a statement: 300 rows, then 200.
+        $this->assertEqual->equal(2, $connection->queryCount() - $before);
+        $this->assertEqual->equal(500, $connection->table('users')->count());
+    }
+
+    public function writingNoRowsWritesNothing()
+    {
+        $connection = InMemoryDatabase::connection();
+        $before = $connection->queryCount();
+
+        $this->assertEqual->equal(0, $connection->table('users')->insertMany([]));
+        $this->assertEqual->equal(0, $connection->queryCount() - $before);
+    }
+
+    /**
+     * Every value is still bound, however many of them there are.
+     */
+    public function valuesAreStillBoundWhenThereAreMany()
+    {
+        $connection = InMemoryDatabase::connection();
+        $connection->table('users')->insertMany([
+            ['email' => "' OR 1=1 --", 'active' => 1, 'deleted_at' => null],
+            ['email' => 'grace@example.com', 'active' => 1, 'deleted_at' => null],
+        ]);
+
+        $this->assertEqual->equal(2, $connection->table('users')->count());
+        $this->assertEqual->equal(
+            ["' OR 1=1 --"],
+            $connection->table('users')->where('email', 'LIKE', "'%")->pluck('email')
+        );
+    }
 }

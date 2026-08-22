@@ -36,6 +36,16 @@ class PostgresDialect implements Dialect
 
     /**
      * {@inheritDoc}
+     *
+     * Postgres binds at most 65535 per statement.
+     */
+    public function maximumBindings(): int
+    {
+        return 60000;
+    }
+
+    /**
+     * {@inheritDoc}
      */
     public function name(): string
     {

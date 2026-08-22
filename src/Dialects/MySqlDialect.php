@@ -43,6 +43,17 @@ class MySqlDialect implements Dialect
 
     /**
      * {@inheritDoc}
+     *
+     * MySQL's limit is the size of the packet rather than a count, and 65535
+     * placeholders is where the protocol itself stops.
+     */
+    public function maximumBindings(): int
+    {
+        return 60000;
+    }
+
+    /**
+     * {@inheritDoc}
      */
     public function name(): string
     {
