@@ -10,6 +10,16 @@ class PostgresDialect implements Dialect
 {
     /**
      * {@inheritDoc}
+     *
+     * Postgres reports the last, where a sequence is being read at all.
+     */
+    public function reportsFirstOfBatch(): bool
+    {
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
      */
     public function quoteIdentifier(string $name): string
     {

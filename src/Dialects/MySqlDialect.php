@@ -10,6 +10,16 @@ class MySqlDialect implements Dialect
 {
     /**
      * {@inheritDoc}
+     *
+     * MySQL reports the first of the batch.
+     */
+    public function reportsFirstOfBatch(): bool
+    {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
      */
     public function quoteIdentifier(string $name): string
     {

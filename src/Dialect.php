@@ -28,6 +28,13 @@ interface Dialect
     public function supportsReturning(): bool;
 
     /**
+     * Whether the id reported after writing many rows at once is the first of them rather
+     * than the last. The ones between are consecutive either way, which is what a database
+     * promises for a single statement.
+     */
+    public function reportsFirstOfBatch(): bool;
+
+    /**
      * How many values one statement may bind. Writing a thousand rows at once is one
      * statement only where the database will take them.
      */

@@ -10,6 +10,16 @@ class SqliteDialect implements Dialect
 {
     /**
      * {@inheritDoc}
+     *
+     * SQLite reports the last row written.
+     */
+    public function reportsFirstOfBatch(): bool
+    {
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
      */
     public function quoteIdentifier(string $name): string
     {
