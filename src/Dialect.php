@@ -28,6 +28,14 @@ interface Dialect
     public function supportsReturning(): bool;
 
     /**
+     * Whether changing the schema can be undone.
+     *
+     * MySQL commits what is open the moment a table is created or altered, so a transaction
+     * around a migration there is a transaction in name only.
+     */
+    public function supportsTransactionalSchema(): bool;
+
+    /**
      * Whether the id reported after writing many rows at once is the first of them rather
      * than the last. The ones between are consecutive either way, which is what a database
      * promises for a single statement.

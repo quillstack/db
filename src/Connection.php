@@ -290,7 +290,7 @@ class Connection
         --$this->depth;
 
         if ($this->depth === 0) {
-            $this->pdo()->commit();
+            $this->finish('commit');
 
             return;
         }
@@ -309,7 +309,7 @@ class Connection
         --$this->depth;
 
         if ($this->depth === 0) {
-            $this->pdo()->rollBack();
+            $this->finish('rollBack');
 
             return;
         }
@@ -323,6 +323,24 @@ class Connection
     public function transactionDepth(): int
     {
         return $this->depth;
+    }
+
+    /**
+     * Ends the outermost transaction, saying so where the database has already ended it
+     * itself: MySQL commits whatever is open the moment a table is created or altered, and
+     * PDO's own complaint gives no hint of that.
+     */
+    private function finish(string $how): void
+    {
+        if (!$this->pdo()->inTransaction()) {
+            throw new TransactionException(
+                'The transaction is no longer open. Some databases commit what is open as '
+                . 'soon as the schema is changed, so a statement doing that cannot be undone '
+                . 'by the transaction around it.'
+            );
+        }
+
+        $how === 'commit' ? $this->pdo()->commit() : $this->pdo()->rollBack();
     }
 
     private function savepoint(int $depth): string

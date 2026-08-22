@@ -11,6 +11,16 @@ class SqliteDialect implements Dialect
     /**
      * {@inheritDoc}
      *
+     * SQLite can undo a schema change like any other.
+     */
+    public function supportsTransactionalSchema(): bool
+    {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
      * SQLite reports the last row written.
      */
     public function reportsFirstOfBatch(): bool

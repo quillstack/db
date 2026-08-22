@@ -11,6 +11,16 @@ class MySqlDialect implements Dialect
     /**
      * {@inheritDoc}
      *
+     * MySQL commits whatever is open the moment a table is created or altered.
+     */
+    public function supportsTransactionalSchema(): bool
+    {
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
      * MySQL reports the first of the batch.
      */
     public function reportsFirstOfBatch(): bool

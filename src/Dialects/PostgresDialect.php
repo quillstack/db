@@ -11,6 +11,16 @@ class PostgresDialect implements Dialect
     /**
      * {@inheritDoc}
      *
+     * Postgres can undo a schema change like any other.
+     */
+    public function supportsTransactionalSchema(): bool
+    {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
      * Postgres reports the last, where a sequence is being read at all.
      */
     public function reportsFirstOfBatch(): bool
