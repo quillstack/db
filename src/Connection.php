@@ -32,6 +32,19 @@ class Connection
     private int $depth = 0;
 
     /**
+     * How many statements have been run. Cheap enough to count always, and the only honest
+     * way to tell whether something is asking the database once or once per row.
+     */
+    private int $queries = 0;
+
+    /**
+     * @var array<int, array{sql: string, bindings: array<string, mixed>}>
+     */
+    private array $log = [];
+
+    private bool $logging = false;
+
+    /**
      * @param array<int, mixed> $options
      */
     public function __construct(
@@ -97,6 +110,12 @@ class Connection
      */
     public function run(string $sql, array $bindings = []): PDOStatement
     {
+        ++$this->queries;
+
+        if ($this->logging) {
+            $this->log[] = ['sql' => $sql, 'bindings' => $bindings];
+        }
+
         try {
             $statement = $this->pdo()->prepare($sql);
 
@@ -171,6 +190,31 @@ class Connection
     public function execute(string $sql, array $bindings = []): int
     {
         return $this->run($sql, $bindings)->rowCount();
+    }
+
+    /**
+     * How many statements this connection has run.
+     */
+    public function queryCount(): int
+    {
+        return $this->queries;
+    }
+
+    /**
+     * Keeps what was run, for looking at afterwards. Off unless asked for: remembering every
+     * statement of a long-running process is a way to run out of memory.
+     */
+    public function logQueries(bool $logging = true): void
+    {
+        $this->logging = $logging;
+    }
+
+    /**
+     * @return array<int, array{sql: string, bindings: array<string, mixed>}>
+     */
+    public function queryLog(): array
+    {
+        return $this->log;
     }
 
     /**

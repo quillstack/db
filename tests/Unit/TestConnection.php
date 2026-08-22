@@ -119,4 +119,25 @@ class TestConnection
 
         InMemoryDatabase::connection()->commit();
     }
+
+    /**
+     * Counting what was run is the only honest way to tell whether something asks the
+     * database once or once per row, which is what the ORM above this is built to answer.
+     */
+    public function whatWasRunIsCounted()
+    {
+        $connection = InMemoryDatabase::connection();
+        $before = $connection->queryCount();
+
+        $connection->logQueries();
+        $connection->table('users')->insert(['email' => 'ada@example.com']);
+        $connection->table('users')->count();
+
+        $this->assertEqual->equal(2, $connection->queryCount() - $before);
+        $this->assertEqual->equal(2, count($connection->queryLog()));
+        $this->assertEqual->equal(
+            ['p0' => 'ada@example.com'],
+            $connection->queryLog()[0]['bindings']
+        );
+    }
 }
