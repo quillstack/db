@@ -1,0 +1,5 @@
+/vendor/
+/.idea/
+/coverage/
+composer.lock
+unit-tests.coverage.xml

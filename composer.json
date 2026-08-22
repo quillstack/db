@@ -1,0 +1,45 @@
+{
+    "name": "quillstack/db",
+    "description": "Database connections and a query builder which binds everything it is given.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "database",
+        "sql",
+        "pdo",
+        "query-builder",
+        "php8"
+    ],
+    "homepage": "https://quillstack.org/db",
+    "authors": [
+        {
+            "name": "Radek Ziemniewicz",
+            "email": "radek@quillstack.org"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "ext-pdo": "*"
+    },
+    "require-dev": {
+        "ext-pdo_sqlite": "*",
+        "phpstan/phpstan": "^2.0",
+        "quillstack/unit-tests": "^0.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "Quillstack\\Db\\": "src/",
+            "Quillstack\\Db\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "unit-tests",
+        "test:coverage": "phpdbg -qrr ./vendor/bin/unit-tests",
+        "stan": "phpstan analyse"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.6.x-dev"
+        }
+    }
+}
