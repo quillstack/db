@@ -76,8 +76,13 @@ class Connection
                 PDO::ATTR_EMULATE_PREPARES => false,
             ]);
         } catch (PDOException $exception) {
+            // Which database it failed to reach, without the rest of the connection string:
+            // a data source name can carry a password, and this message goes to a log.
+            $driver = strtok($this->dsn, ':');
+
             throw new QueryFailedException(
-                "Unable to connect: {$exception->getMessage()}",
+                'Unable to connect to ' . ($driver === false ? 'the database' : $driver)
+                . ": {$exception->getMessage()}",
                 0,
                 $exception
             );
@@ -190,6 +195,16 @@ class Connection
     public function execute(string $sql, array $bindings = []): int
     {
         return $this->run($sql, $bindings)->rowCount();
+    }
+
+    /**
+     * Whether the connection has actually been opened. Building one does not, and something
+     * which never asks the database anything should never make it — which is a thing to
+     * check rather than to trust.
+     */
+    public function isOpen(): bool
+    {
+        return $this->pdo !== null;
     }
 
     /**

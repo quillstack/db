@@ -32,9 +32,23 @@ class TestConnection
      */
     public function nothingIsOpenedUntilSomethingIsAsked()
     {
+        $connection = new Connection('sqlite::memory:');
+
+        $this->assertBoolean->isFalse($connection->isOpen());
+
+        $connection->select('SELECT 1');
+
+        $this->assertBoolean->isTrue($connection->isOpen());
+    }
+
+    /**
+     * Building one against a database that is not there is still fine; asking anything of it
+     * is what fails.
+     */
+    public function whatCannotBeOpenedSaysSoWhenItIsAsked()
+    {
         $connection = new Connection('sqlite:/nowhere/at/all/db.sqlite');
 
-        // Building it is fine; asking anything of it is what fails.
         $this->assertExceptions->expect(QueryFailedException::class);
 
         $connection->select('SELECT 1');
