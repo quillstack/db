@@ -64,6 +64,21 @@ $db->table('posts')->whereIn('user_id', [1, 2, 3])->get();
 
 An empty set matches nothing rather than becoming `IN ()`, which is not SQL.
 
+A query can ask another one a question. It shares the bindings of the one around it, because
+two of them each numbering their own placeholders from zero would give the same name to
+different values:
+
+```php
+$db->table('users')->whereExists(
+    $db->table('posts')
+        ->select(new Expression('1'))
+        ->whereColumn('posts.user_id', '=', 'users.id')
+);
+```
+
+`whereColumn()` compares two columns rather than a column against a value — neither side can
+be bound, so both are names and the operator is one of a known few.
+
 Many rows go in one statement rather than one each, split into as many as the values need —
 a database will only bind so many per statement, and finding that out at a thousand rows is
 not the moment:

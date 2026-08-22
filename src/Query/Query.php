@@ -8,7 +8,9 @@ use Closure;
 use Quillstack\Db\Connection;
 use Quillstack\Db\Dialect;
 use Quillstack\Db\Exceptions\DbException;
+use Quillstack\Db\Query\Conditions\ColumnComparison;
 use Quillstack\Db\Query\Conditions\Comparison;
+use Quillstack\Db\Query\Conditions\Exists;
 use Quillstack\Db\Query\Conditions\Group;
 use Quillstack\Db\Query\Conditions\InList;
 use Quillstack\Db\Query\Conditions\NullCheck;
@@ -126,6 +128,28 @@ class Query
         return $this->addWhere(new InList($column, $values, true, $boolean));
     }
 
+    /**
+     * A test between two columns rather than against a value. Neither side can be bound, so
+     * both are names and the operator is one of a known few.
+     */
+    public function whereColumn(string $first, string $operator, string $second, string $boolean = 'AND'): self
+    {
+        return $this->addWhere(new ColumnComparison($first, $operator, $second, $boolean));
+    }
+
+    /**
+     * Keeps the rows another query finds something for.
+     */
+    public function whereExists(self $query, string $boolean = 'AND'): self
+    {
+        return $this->addWhere(new Exists($query, false, $boolean));
+    }
+
+    public function whereNotExists(self $query, string $boolean = 'AND'): self
+    {
+        return $this->addWhere(new Exists($query, true, $boolean));
+    }
+
     public function whereNull(string $column, string $boolean = 'AND'): self
     {
         return $this->addWhere(new NullCheck($column, false, $boolean));
@@ -197,12 +221,23 @@ class Query
      */
     public function toSql(): array
     {
+        $bindings = new Bindings();
+        $sql = $this->compile($this->connection->dialect(), $bindings);
+
+        return ['sql' => $sql, 'bindings' => $bindings->all()];
+    }
+
+    /**
+     * Writes this query into an existing set of bindings.
+     *
+     * A query inside another one has to share them: two of them each numbering their own
+     * placeholders from zero would give the same name to different values.
+     */
+    public function compile(Dialect $dialect, Bindings $bindings): string
+    {
         if ($this->table === '') {
             throw new DbException('A query needs a table, call from() first');
         }
-
-        $dialect = $this->connection->dialect();
-        $bindings = new Bindings();
 
         $columns = implode(', ', array_map(
             static fn (string|Expression $column): string => Name::qualify($dialect, $column),
@@ -234,9 +269,7 @@ class Query
             ));
         }
 
-        $sql .= $dialect->limitClause($this->limit, $this->offset);
-
-        return ['sql' => $sql, 'bindings' => $bindings->all()];
+        return $sql . $dialect->limitClause($this->limit, $this->offset);
     }
 
     /**
@@ -279,7 +312,13 @@ class Query
     {
         $dialect = $this->connection->dialect();
         $name = Name::qualify($dialect, $column);
-        $row = $this->select(new Expression("COUNT({$name}) AS quillstack_count"))->first();
+
+        // Counting rows does not care what order they are in, and sorting a large table to
+        // throw the order away is work nobody asked for.
+        $counting = clone $this;
+        $counting->orders = [];
+
+        $row = $counting->select(new Expression("COUNT({$name}) AS quillstack_count"))->first();
         $count = $row['quillstack_count'] ?? 0;
 
         return is_numeric($count) ? (int) $count : 0;

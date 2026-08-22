@@ -219,4 +219,81 @@ class TestQueryParts
             $connection->table('users')->where('email', 'LIKE', "'%")->pluck('email')
         );
     }
+
+    /**
+     * A query inside another one shares its bindings: two of them each numbering their own
+     * placeholders from zero would give the same name to different values, and the second
+     * would quietly win.
+     */
+    public function aQueryInsideAnotherSharesItsBindings()
+    {
+        $connection = InMemoryDatabase::withRows();
+
+        $posts = $connection->table('posts')
+            ->select(new Expression('1'))
+            ->whereColumn('posts.user_id', '=', 'users.id')
+            ->where('title', '=', 'Third');
+
+        $query = $connection->table('users')
+            ->where('active', '=', true)
+            ->whereExists($posts);
+
+        ['sql' => $sql, 'bindings' => $bindings] = $query->toSql();
+
+        $this->assertEqual->equal(
+            'SELECT * FROM "users" WHERE "active" = :p0 AND EXISTS (SELECT 1 FROM "posts"'
+            . ' WHERE "posts"."user_id" = "users"."id" AND "title" = :p1)',
+            $sql
+        );
+        $this->assertEqual->equal(['p0' => 1, 'p1' => 'Third'], $bindings);
+        $this->assertEqual->equal(['grace@example.com'], $query->pluck('email'));
+    }
+
+    public function keepingWhatAnotherQueryFindsNothingFor()
+    {
+        $connection = InMemoryDatabase::withRows();
+
+        $withoutPosts = $connection->table('users')
+            ->whereNotExists(
+                $connection->table('posts')
+                    ->select(new Expression('1'))
+                    ->whereColumn('posts.user_id', '=', 'users.id')
+            )
+            ->orderBy('id');
+
+        $this->assertEqual->equal(['alan@example.com'], $withoutPosts->pluck('email'));
+    }
+
+    public function comparingTwoColumns()
+    {
+        $connection = InMemoryDatabase::withRows();
+
+        $this->assertEqual->equal(
+            2,
+            $connection->table('posts')->whereColumn('user_id', '<', 'id')->count()
+        );
+    }
+
+    public function anUnknownOperatorBetweenColumnsIsRefused()
+    {
+        $this->assertExceptions->expect(DbException::class);
+
+        InMemoryDatabase::connection()->table('users')->whereColumn('id', 'LIKE', 'email');
+    }
+
+    /**
+     * Counting rows does not care what order they are in, and sorting a large table to throw
+     * the order away is work nobody asked for.
+     */
+    public function countingDoesNotSort()
+    {
+        $connection = InMemoryDatabase::withRows();
+        $connection->logQueries();
+
+        $this->assertEqual->equal(3, $connection->table('users')->orderBy('email')->count());
+        $this->assertEqual->equal(
+            false,
+            str_contains($connection->queryLog()[0]['sql'], 'ORDER BY')
+        );
+    }
 }
