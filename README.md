@@ -224,7 +224,6 @@ This is one component of [Quillstack](https://github.com/quillstack), a PHP fram
 as simple to use as it is strict about what it does.
 
 - [quillstack/orm](https://github.com/quillstack/orm) — what is built on this
-- [quillstack/query-builder](https://github.com/quillstack/query-builder) — the earlier answer to the same question
 - [quillstack/framework](https://github.com/quillstack/framework) — where a connection is wired in
 
 ## License
