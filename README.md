@@ -16,18 +16,36 @@
 Connections and a query builder. The layer the ORM is built on, and useful on its own where
 an ORM would be too much.
 
+## Why this exists
+
+A query builder has one job that matters and it is not brevity: **every value a query carries
+has to be bound, and never written into the SQL**. Get that wrong once, anywhere, and the
+application has an injection. Most builders bind most things; this one binds all of them,
+including the contents of an `IN`, and there is no method here that takes a value and puts it in
+a string.
+
+The second job is producing SQL that is actually SQL. `whereIn('id', [])` cannot become
+`IN ()` — that is a syntax error on every engine but SQLite — so it becomes `1 = 0`, which
+matches nothing on all of them.
+
+It is also the thing [quillstack/orm](https://github.com/quillstack/orm) is built on, which is
+why a relation there can be loaded for a whole result set: one `IN` with a bound set is the
+mechanism.
+
 ## Requirements
 
 - PHP 8.1 or newer
 - `ext-pdo`, and the driver for your database
 
-## Installing
+## Installation
 
 ```shell
 composer require quillstack/db
 ```
 
-## A connection
+## Usage
+
+### A connection
 
 Building one does not open it. A request which never asks the database anything pays nothing
 for having one configured.
@@ -41,7 +59,7 @@ $db = new Connection('mysql:host=localhost;dbname=shop', 'user', 'secret');
 SQLite, MySQL and PostgreSQL each have a dialect; the connection picks the right one from the
 driver. A driver with no dialect says so rather than writing SQL that database will not read.
 
-## Queries
+### Queries
 
 Every method hands back a new query, so one can be branched, stored or passed on without
 either side changing under the other.
@@ -100,7 +118,7 @@ not the moment:
 $db->table('users')->insertMany($rows);
 ```
 
-## Values are bound, never written
+### Values are bound, never written
 
 No value reaches the statement. What goes into the SQL is a placeholder; the value travels
 beside it, typed:
@@ -131,7 +149,7 @@ $db->table('posts')
     ->get();
 ```
 
-## Transactions
+### Transactions
 
 Committed when the callback returns, rolled back when it throws — and the exception carries
 on rather than being swallowed.
@@ -146,7 +164,47 @@ $db->transaction(function (Connection $db) {
 Nesting works. The inner ones become savepoints, so an inner failure undoes its own work and
 leaves the outer transaction to carry on.
 
-## Unit tests
+## Benchmark
+
+Measured with [quillstack/benchmark](https://github.com/quillstack/benchmark) on one query —
+two columns, a boolean condition, an `IN` over two values, an order and a limit — built a
+thousand times. Runs are interleaved and unconcurrent, each figure is the median of five, and
+PHP is 8.5.7.
+
+| | Version |
+| --- | --- |
+| quillstack/db | v0.6.2 |
+| doctrine/dbal | 4.4.4 |
+| aura/sqlquery | 2.8.1 |
+| latitude/latitude | 4.4.1 |
+
+| | Per query | Relative |
+| --- | --- | --- |
+| doctrine/dbal | 2.77 µs | 0.60× |
+| **quillstack/db** | **4.62 µs** | — |
+| aura/sqlquery | 5.92 µs | 1.28× |
+| latitude/latitude | 10.64 µs | 2.3× |
+
+**Doctrine's builder is faster**, and part of the reason is that it does less on the way: it
+concatenates the SQL you give it and leaves the identifiers alone, where this one quotes them
+and binds the `IN` values individually.
+
+The thing worth comparing is not the microseconds. Asked for `IN` over an empty set, the four
+produce:
+
+| | SQL |
+| --- | --- |
+| **quillstack/db** | `WHERE 1 = 0` |
+| doctrine/dbal | `IN (:ids)`, expanded when it runs |
+| aura/sqlquery | `IN (:_1_)`, with a PHP warning |
+| latitude/latitude | `IN ()` |
+
+`IN ()` is accepted by SQLite and rejected by everything else. And asked to compare a boolean,
+`latitude` writes `active = true` into the SQL rather than binding it — defensible, since a
+boolean has two values and neither of them is an injection, but not what this package means by
+*everything is bound*.
+
+## Tests
 
 ```shell
 composer test
@@ -160,6 +218,15 @@ composer test:coverage
 composer stan
 ```
 
+## The rest of Quillstack
+
+This is one component of [Quillstack](https://github.com/quillstack), a PHP framework which is
+as simple to use as it is strict about what it does.
+
+- [quillstack/orm](https://github.com/quillstack/orm) — what is built on this
+- [quillstack/query-builder](https://github.com/quillstack/query-builder) — the earlier answer to the same question
+- [quillstack/framework](https://github.com/quillstack/framework) — where a connection is wired in
+
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT — see [LICENSE](https://github.com/quillstack/db/blob/main/LICENSE).
