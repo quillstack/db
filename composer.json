@@ -10,7 +10,7 @@
         "query-builder",
         "php8"
     ],
-    "homepage": "https://quillstack.org/db",
+    "homepage": "https://quillstack.org/packages/db",
     "authors": [
         {
             "name": "Radek Ziemniewicz",
