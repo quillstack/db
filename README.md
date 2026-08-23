@@ -6,6 +6,11 @@
 [![PHP Version](https://img.shields.io/packagist/php-v/quillstack/db)](https://packagist.org/packages/quillstack/db)
 [![StyleCI](https://github.styleci.io/repos/1343163928/shield?branch=main)](https://github.styleci.io/repos/1343163928?branch=main)
 [![CodeFactor](https://www.codefactor.io/repository/github/quillstack/db/badge)](https://www.codefactor.io/repository/github/quillstack/db)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=quillstack_db&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=quillstack_db)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=quillstack_db&metric=coverage)](https://sonarcloud.io/summary/new_code?id=quillstack_db)
+[![Maintainability](https://sonarcloud.io/api/project_badges/measure?project=quillstack_db&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=quillstack_db)
+[![Reliability](https://sonarcloud.io/api/project_badges/measure?project=quillstack_db&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=quillstack_db)
+[![Security](https://sonarcloud.io/api/project_badges/measure?project=quillstack_db&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=quillstack_db)
 [![License](https://img.shields.io/packagist/l/quillstack/db)](https://github.com/quillstack/db/blob/main/LICENSE)
 
 Connections and a query builder. The layer the ORM is built on, and useful on its own where
