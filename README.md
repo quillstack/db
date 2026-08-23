@@ -5,6 +5,7 @@
 [![Downloads](https://img.shields.io/packagist/dt/quillstack/db.svg)](https://packagist.org/packages/quillstack/db)
 [![PHP Version](https://img.shields.io/packagist/php-v/quillstack/db)](https://packagist.org/packages/quillstack/db)
 [![StyleCI](https://github.styleci.io/repos/1343163928/shield?branch=main)](https://github.styleci.io/repos/1343163928?branch=main)
+[![CodeFactor](https://www.codefactor.io/repository/github/quillstack/db/badge)](https://www.codefactor.io/repository/github/quillstack/db)
 [![License](https://img.shields.io/packagist/l/quillstack/db)](https://github.com/quillstack/db/blob/main/LICENSE)
 
 Connections and a query builder. The layer the ORM is built on, and useful on its own where
